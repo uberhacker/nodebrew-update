@@ -1,0 +1,19 @@
+#!/bin/bash
+NODEBREW=$(command -v nodebrew)
+if [ $? == 1 ]; then
+  echo "nodebrew: command not found"
+  exit 1
+fi
+INSTALLED_VERSIONS=$(nodebrew ls | grep -v current | xargs)
+CURRENT_VERSION=$(nodebrew ls | grep current | cut -d':' -f2 | cut -d'.' -f1)
+for INSTALLED_VERSION in $INSTALLED_VERSIONS; do
+  VERSION=$(echo $INSTALLED_VERSION | cut -d'.' -f1)
+  LATEST_VERSION=$(nodebrew ls-remote | grep $VERSION | xargs | sed 's, ,\n,g' | sort -Vr | head -1)
+  if [ $INSTALLED_VERSION != $LATEST_VERSION ]; then
+    nodebrew uninstall $INSTALLED_VERSION
+    nodebrew install $LATEST_VERSION
+  fi
+  if [ $VERSION == $CURRENT_VERSION ]; then
+    nodebrew use $LATEST_VERSION
+  fi
+done
